@@ -46,7 +46,7 @@
 					class="border border-gray-300 p-2 rounded w-full mb-4"
 				/>
 				<button
-					on:click={checkPassword}
+					onclick={checkPassword}
 					class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
 					>Submit</button
 				>
