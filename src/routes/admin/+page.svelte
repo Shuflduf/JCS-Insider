@@ -1,99 +1,41 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import { cubicInOut } from "svelte/easing";
   import { Tween } from "svelte/motion";
   import { fade } from "svelte/transition";
+  import { getMenu } from "./appwrite";
+  import Settings from "./Settings.svelte";
+
+  interface MenuItem {
+    name: string;
+    price: number;
+  }
+
+  interface MenuCategory {
+    [category: string]: MenuItem[];
+  }
+
+  interface MenuData {
+    [day: string]: MenuCategory;
+  }
 
   let password = $state("");
   let isAuthenticated = $state(false);
   let isTransitioning = $state(false);
   let isReady = $derived(() => isAuthenticated && !isTransitioning);
   const correctPassword = "password";
-  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
-  type Item = { name: string; height: number };
-  type Day = {
-    Breakfast: Item[];
-    Lunch: Item[];
-    Bake: Item[];
-  };
+  let items = $state<MenuData>({});
+  let days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+  let categories: string[] = $state(["Food Time"]);
+  let isSettingsOpen = $state(false);
 
-  // the following was ai generated because I'm lazy
-  let items: { [key: string]: Day } = $state({
-    Monday: {
-      Breakfast: [
-        { name: "Eggs Benedict", height: 80 },
-        { name: "Pancakes", height: 70 },
-      ],
-      Lunch: [
-        { name: "Caesar Salad", height: 90 },
-        { name: "Club Sandwich", height: 85 },
-      ],
-      Bake: [
-        { name: "Croissant", height: 60 },
-        { name: "Muffin", height: 65 },
-      ],
-    },
-    Tuesday: {
-      Breakfast: [
-        { name: "Omelette", height: 75 },
-        { name: "French Toast", height: 70 },
-      ],
-      Lunch: [
-        { name: "Soup & Sandwich", height: 85 },
-        { name: "Cobb Salad", height: 90 },
-      ],
-      Bake: [
-        { name: "Danish", height: 60 },
-        { name: "Scone", height: 65 },
-      ],
-    },
-    Wednesday: {
-      Breakfast: [
-        { name: "Bagel", height: 70 },
-        { name: "Smoothie", height: 60 },
-      ],
-      Lunch: [
-        { name: "BLT Sandwich", height: 85 },
-        { name: "Chicken Salad", height: 90 },
-      ],
-      Bake: [
-        { name: "Brownie", height: 60 },
-        { name: "Cupcake", height: 65 },
-      ],
-    },
-    Thursday: {
-      Breakfast: [
-        { name: "Waffles", height: 75 },
-        { name: "Fruit Salad", height: 70 },
-      ],
-      Lunch: [
-        { name: "Grilled Cheese", height: 85 },
-        { name: "Tomato Soup", height: 90 },
-        { name: "Tomato Soup", height: 90 },
-        { name: "Tomato Soup", height: 90 },
-        { name: "Tomato Soup", height: 90 },
-        { name: "Tomato Soup", height: 90 },
-        { name: "Tomato Soup", height: 90 },
-      ],
-      Bake: [
-        { name: "Cookie", height: 60 },
-        { name: "Pie", height: 65 },
-      ],
-    },
-    Friday: {
-      Breakfast: [
-        { name: "Breakfast Burrito", height: 80 },
-        { name: "Yogurt Parfait", height: 70 },
-      ],
-      Lunch: [
-        { name: "Fish Tacos", height: 90 },
-        { name: "Quinoa Salad", height: 85 },
-      ],
-      Bake: [
-        { name: "Cheesecake", height: 60 },
-        { name: "Donut", height: 65 },
-      ],
-    },
+  onMount(async () => {
+    const weekdays = await fetch("/api/menu");
+    const jsonWeekdays = await weekdays.json();
+    categories = jsonWeekdays["elements"];
+    items = await getMenu();
+    console.log(items);
   });
 
   let sideWidth = new Tween(0, {
@@ -116,11 +58,44 @@
     }
   }
 
-  function deleteItem(day: string, category: keyof Day, itemIndex: number) {
+  function handleSubmit(e: SubmitEvent) {
+    e.preventDefault();
+    checkPassword();
+  }
+
+  function deleteItem(day: string, category: string, itemIndex: number) {
+    if (!items[day]) return;
+    if (!items[day][category]) return;
+
     items[day][category] = items[day][category].filter(
       (_, index) => index !== itemIndex
     );
     items = items; // trigger reactivity
+  }
+
+  function firstCap(input: string) {
+    return input.charAt(0).toUpperCase() + input.slice(1);
+  }
+
+  async function handleCategorySave(newCategories: string[]) {
+    try {
+      const response = await fetch("/api/menu", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ newValues: newCategories }),
+      });
+
+      if (response.ok) {
+        categories = newCategories;
+      } else {
+        alert("Failed to update categories");
+      }
+    } catch (error) {
+      console.error("Error updating categories:", error);
+      alert("Failed to update categories");
+    }
   }
 </script>
 
@@ -133,7 +108,14 @@
     <div class="flex w-full h-screen" transition:fade>
       <div class="flex-1" style="max-width: {sideWidth.current}px"></div>
 
-      <div class="flex-1 flex gap-4 p-4">
+      <div class="flex-1 flex gap-4 p-4 relative">
+        <button
+          class="fixed bottom-8 right-8 p-3 rounded-full hover:bg-gray-200 bg-white shadow-lg text-xl"
+          onclick={() => (isSettingsOpen = true)}
+        >
+          ⚙️
+        </button>
+
         {#each days as day}
           <div class="flex-1 flex flex-col h-full">
             <h2
@@ -142,26 +124,27 @@
               {day}
             </h2>
             <div class="flex-1 overflow-y-auto">
-              {#each ["Breakfast", "Lunch", "Bake"] as category (category as keyof Day)}
+              {#each categories as category}
                 <div class="mb-6">
                   <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                    {category}
+                    {firstCap(category)}
                   </h3>
-                  {#each items[day][category as keyof Day] as item, itemIndex}
-                    <div
-                      class="bg-white rounded-lg shadow-md mb-4 p-4 relative"
-                      style="min-height: {item.height}px"
-                    >
-                      <button
-                        class="absolute top-0 right-2 text-gray-500 hover:text-red-500"
-                        onclick={() =>
-                          deleteItem(day, category as keyof Day, itemIndex)}
+                  {#if items[day]?.[category]}
+                    {#each items[day][category] as item, itemIndex}
+                      <div
+                        class="bg-white rounded-lg shadow-md mb-4 p-4 relative"
                       >
-                        ×
-                      </button>
-                      <p>{item.name}</p>
-                    </div>
-                  {/each}
+                        <button
+                          class="absolute top-0 right-2 text-gray-500 hover:text-red-500"
+                          onclick={() => deleteItem(day, category, itemIndex)}
+                        >
+                          ×
+                        </button>
+                        <p>{item.name}</p>
+                        <p class="text-sm text-gray-600">${item.price}</p>
+                      </div>
+                    {/each}
+                  {/if}
                 </div>
               {/each}
             </div>
@@ -185,19 +168,21 @@
           class:opacity-0={isTransitioning}
         >
           {#if !isAuthenticated || isTransitioning}
-            <input
-              type="password"
-              id="password"
-              placeholder="Password"
-              bind:value={password}
-              class="border border-gray-300 p-2 rounded w-64 mb-4"
-            />
-            <button
-              onclick={checkPassword}
-              class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 w-20"
-            >
-              Submit
-            </button>
+            <form onsubmit={handleSubmit}>
+              <input
+                type="password"
+                id="password"
+                placeholder="Password"
+                bind:value={password}
+                class="border border-gray-300 p-2 rounded w-64 mb-4"
+              />
+              <button
+                type="submit"
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 w-20"
+              >
+                Submit
+              </button>
+            </form>
           {/if}
         </div>
       </div>
@@ -206,6 +191,12 @@
     </div>
   {/if}
 </div>
+
+<Settings
+  bind:isOpen={isSettingsOpen}
+  {categories}
+  onSave={handleCategorySave}
+/>
 
 <!-- ai because im idiot -->
 <style>
