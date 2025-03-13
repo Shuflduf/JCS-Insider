@@ -4,20 +4,7 @@
   import { Tween } from "svelte/motion";
   import { fade } from "svelte/transition";
   import { getMenu } from "./appwrite";
-  import Settings from "./Settings.svelte";
-
-  interface MenuItem {
-    name: string;
-    price: number;
-  }
-
-  interface MenuCategory {
-    [category: string]: MenuItem[];
-  }
-
-  interface MenuData {
-    [day: string]: MenuCategory;
-  }
+  import type { MenuData } from "./appwrite";
 
   let password = $state("");
   let isAuthenticated = $state(false);
@@ -25,15 +12,21 @@
   let isReady = $derived(() => isAuthenticated && !isTransitioning);
   const correctPassword = "password";
 
-  let items = $state<MenuData>({});
-  let days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-  let categories: string[] = $state(["Food Time"]);
+  let items: MenuData = $state({
+    Monday: {
+      Breakfast: [
+        { name: "Egg", price: 5 },
+        { name: "Bread", price: 2 },
+      ],
+      Lunch: [
+        { name: "Rice", price: 3 },
+        { name: "Chicken", price: 7 },
+      ],
+    },
+  });
   let isSettingsOpen = $state(false);
 
   onMount(async () => {
-    const weekdays = await fetch("/api/menu");
-    const jsonWeekdays = await weekdays.json();
-    categories = jsonWeekdays["elements"];
     items = await getMenu();
     console.log(items);
   });
@@ -72,31 +65,6 @@
     );
     items = items; // trigger reactivity
   }
-
-  function firstCap(input: string) {
-    return input.charAt(0).toUpperCase() + input.slice(1);
-  }
-
-  async function handleCategorySave(newCategories: string[]) {
-    try {
-      const response = await fetch("/api/menu", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ newValues: newCategories }),
-      });
-
-      if (response.ok) {
-        categories = newCategories;
-      } else {
-        alert("Failed to update categories");
-      }
-    } catch (error) {
-      console.error("Error updating categories:", error);
-      alert("Failed to update categories");
-    }
-  }
 </script>
 
 <div
@@ -109,46 +77,17 @@
       <div class="flex-1" style="max-width: {sideWidth.current}px"></div>
 
       <div class="flex-1 flex gap-4 p-4 relative">
-        <button
-          class="fixed bottom-8 right-8 p-3 rounded-full hover:bg-gray-200 bg-white shadow-lg text-xl"
-          onclick={() => (isSettingsOpen = true)}
-        >
-          ⚙️
-        </button>
-
-        {#each days as day}
-          <div class="flex-1 flex flex-col h-full">
-            <h2
-              class="text-xl font-bold mb-4 sticky top-0 bg-white p-2 shadow-sm"
-            >
-              {day}
-            </h2>
-            <div class="flex-1 overflow-y-auto">
-              {#each categories as category}
-                <div class="mb-6">
-                  <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                    {firstCap(category)}
-                  </h3>
-                  {#if items[day]?.[category]}
-                    {#each items[day][category] as item, itemIndex}
-                      <div
-                        class="bg-white rounded-lg shadow-md mb-4 p-4 relative"
-                      >
-                        <button
-                          class="absolute top-0 right-2 text-gray-500 hover:text-red-500"
-                          onclick={() => deleteItem(day, category, itemIndex)}
-                        >
-                          ×
-                        </button>
-                        <p>{item.name}</p>
-                        <p class="text-sm text-gray-600">${item.price}</p>
-                      </div>
-                    {/each}
-                  {/if}
-                </div>
-              {/each}
-            </div>
-          </div>
+        {#each Object.keys(items) as day}
+          {#each Object.keys(items[day]) as category}
+            {#each items[day][category] as item}
+              <div
+                class="bg-white rounded-lg shadow-md mb-4 p-4 relative w-full"
+              >
+                <p>{item.name}</p>
+                <p class="text-sm text-gray-600">${item.price}</p>
+              </div>
+            {/each}
+          {/each}
         {/each}
       </div>
 
@@ -191,23 +130,3 @@
     </div>
   {/if}
 </div>
-
-<Settings
-  bind:isOpen={isSettingsOpen}
-  {categories}
-  onSave={handleCategorySave}
-/>
-
-<!-- ai because im idiot -->
-<style>
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  .overflow-y-auto::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Hide scrollbar for IE, Edge and Firefox */
-  .overflow-y-auto {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-  }
-</style>
