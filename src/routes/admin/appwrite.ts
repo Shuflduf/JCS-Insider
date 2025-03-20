@@ -6,17 +6,13 @@ const client = new Client()
 
 const databases = new Databases(client);
 
-interface MenuItem {
-  name: string;
-  price: number;
-}
-
-interface MenuCategory {
-  [category: string]: MenuItem[];
-}
-
-interface MenuData {
-  [day: string]: MenuCategory;
+export interface MenuData {
+  [weekday: string]: {
+    [category: string]: {
+      name: string;
+      price: number | undefined
+    }[];
+  };
 }
 
 export async function getMenu(): Promise<MenuData> {

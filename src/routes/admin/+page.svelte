@@ -4,20 +4,9 @@
   import { Tween } from "svelte/motion";
   import { fade } from "svelte/transition";
   import { getMenu } from "./appwrite";
-  import Settings from "./Settings.svelte";
-
-  interface MenuItem {
-    name: string;
-    price: number;
-  }
-
-  interface MenuCategory {
-    [category: string]: MenuItem[];
-  }
-
-  interface MenuData {
-    [day: string]: MenuCategory;
-  }
+  import type { MenuData } from "./appwrite";
+  import Col from "$lib/col.svelte";
+  import Row from "$lib/row.svelte";
 
   let password = $state("");
   let isAuthenticated = $state(false);
@@ -25,15 +14,20 @@
   let isReady = $derived(() => isAuthenticated && !isTransitioning);
   const correctPassword = "password";
 
-  let items = $state<MenuData>({});
-  let days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
-  let categories: string[] = $state(["Food Time"]);
-  let isSettingsOpen = $state(false);
+  let items: MenuData = $state({
+    Monday: {
+      Breakfast: [
+        { name: "Egg", price: 5 },
+        { name: "Bread", price: 2 },
+      ],
+      Lunch: [
+        { name: "Rice", price: 3 },
+        { name: "Chicken", price: 7 },
+      ],
+    },
+  });
 
   onMount(async () => {
-    const weekdays = await fetch("/api/menu");
-    const jsonWeekdays = await weekdays.json();
-    categories = jsonWeekdays["elements"];
     items = await getMenu();
     console.log(items);
   });
@@ -68,34 +62,19 @@
     if (!items[day][category]) return;
 
     items[day][category] = items[day][category].filter(
-      (_, index) => index !== itemIndex
+      (_, index) => index !== itemIndex,
     );
     items = items; // trigger reactivity
   }
 
-  function firstCap(input: string) {
-    return input.charAt(0).toUpperCase() + input.slice(1);
+  function newItem(day: string, category: string) {
+    items[day][category].push({ name: "", price: undefined });
+    items = items; // trigger reactivity
   }
 
-  async function handleCategorySave(newCategories: string[]) {
-    try {
-      const response = await fetch("/api/menu", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ newValues: newCategories }),
-      });
-
-      if (response.ok) {
-        categories = newCategories;
-      } else {
-        alert("Failed to update categories");
-      }
-    } catch (error) {
-      console.error("Error updating categories:", error);
-      alert("Failed to update categories");
-    }
+  function newCategory(day: string) {
+    items[day]["New Category"] = [];
+    items = items; // trigger reactivity
   }
 </script>
 
@@ -105,54 +84,75 @@
     : 'bg-gray-300'}"
 >
   {#if isAuthenticated}
-    <div class="flex w-full h-screen" transition:fade>
-      <div class="flex-1" style="max-width: {sideWidth.current}px"></div>
-
-      <div class="flex-1 flex gap-4 p-4 relative">
-        <button
-          class="fixed bottom-8 right-8 p-3 rounded-full hover:bg-gray-200 bg-white shadow-lg text-xl"
-          onclick={() => (isSettingsOpen = true)}
-        >
-          ⚙️
-        </button>
-
-        {#each days as day}
-          <div class="flex-1 flex flex-col h-full">
-            <h2
-              class="text-xl font-bold mb-4 sticky top-0 bg-white p-2 shadow-sm"
+    <div class="flex w-full h-screen overflow-hidden" transition:fade>
+      <div class="flex-1 flex gap-4 p-4 relative h-full">
+        {#each Object.keys(items) as day}
+          <Col class="h-full flex flex-col min-w-[300px]">
+            <h1
+              class="text-center font-bold text-2xl pb-4 sticky top-0 bg-gray-200"
             >
               {day}
-            </h2>
-            <div class="flex-1 overflow-y-auto">
-              {#each categories as category}
-                <div class="mb-6">
-                  <h3 class="text-lg font-semibold mb-3 text-gray-700">
-                    {firstCap(category)}
-                  </h3>
-                  {#if items[day]?.[category]}
-                    {#each items[day][category] as item, itemIndex}
-                      <div
-                        class="bg-white rounded-lg shadow-md mb-4 p-4 relative"
-                      >
+            </h1>
+            <div class="overflow-y-auto flex-1">
+              {#each Object.keys(items[day]) as category}
+                <Col>
+                  <div
+                    class="flex justify-center w-full gap-4 items-center sticky top-0 bg-gray-200"
+                  >
+                    <h2 class="font-bold text-xl">{category}</h2>
+                    <button
+                      onclick={() => newItem(day, category)}
+                      class="m-2 p-2 rounded flex items-center justify-center bg-blue-500 text-white hover:bg-blue-700"
+                    >
+                      New Item</button
+                    >
+                  </div>
+                  {#each items[day][category] as item}
+                    <div
+                      class="bg-white rounded-lg shadow-md mb-4 p-4 relative w-full"
+                    >
+                      <input
+                        type="text"
+                        placeholder="Name"
+                        class="border border-gray-300 p-2 rounded w-full mb-4"
+                        bind:value={item.name}
+                      />
+                      <Row>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="Price"
+                          class="border border-gray-300 p-2 rounded w-full mb-4"
+                          bind:value={item.price}
+                        />
                         <button
-                          class="absolute top-0 right-2 text-gray-500 hover:text-red-500"
-                          onclick={() => deleteItem(day, category, itemIndex)}
+                          class="bg-red-500 text-white px-4 py-2 h-min rounded hover:bg-red-700"
+                          onclick={() =>
+                            deleteItem(
+                              day,
+                              category,
+                              items[day][category].indexOf(item),
+                            )}
                         >
-                          ×
+                          Delete
                         </button>
-                        <p>{item.name}</p>
-                        <p class="text-sm text-gray-600">${item.price}</p>
-                      </div>
-                    {/each}
-                  {/if}
-                </div>
+                      </Row>
+                    </div>
+                  {/each}
+                </Col>
               {/each}
             </div>
-          </div>
+            <div class="mt-auto pt-4">
+              <button
+                onclick={() => newCategory(day)}
+                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+              >
+                New Category
+              </button>
+            </div>
+          </Col>
         {/each}
       </div>
-
-      <div class="flex-1" style="max-width: {sideWidth.current}px"></div>
     </div>
   {:else}
     <div class="flex w-full">
@@ -191,23 +191,3 @@
     </div>
   {/if}
 </div>
-
-<Settings
-  bind:isOpen={isSettingsOpen}
-  {categories}
-  onSave={handleCategorySave}
-/>
-
-<!-- ai because im idiot -->
-<style>
-  /* Hide scrollbar for Chrome, Safari and Opera */
-  .overflow-y-auto::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Hide scrollbar for IE, Edge and Firefox */
-  .overflow-y-auto {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
-  }
-</style>
