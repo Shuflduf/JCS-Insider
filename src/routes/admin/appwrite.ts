@@ -10,7 +10,7 @@ export interface MenuData {
   [weekday: string]: {
     [category: string]: {
       name: string;
-      price: number
+      price: number | undefined
     }[];
   };
 }
