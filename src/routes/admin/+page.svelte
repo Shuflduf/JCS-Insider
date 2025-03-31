@@ -54,7 +54,10 @@
         console.log("Authenticated");
       }, 700);
     } else {
-      alert("Incorrect password");
+      toastMessage = "Incorrect password";
+      toastType = "error";
+      showToast = true;
+      setTimeout(() => (showToast = false), 3000);
     }
   }
 
@@ -109,38 +112,39 @@
 >
   {#if isAuthenticated}
     <div
-      class="flex w-full h-screen overflow-hidden relative {isLoading
-        ? 'pointer-events-none'
-        : ''}"
+      class="flex w-full h-screen overflow-hidden relative {isLoading ? 'pointer-events-none' : ''}"
       transition:fade
     >
-      {#if isLoading}
-        <div
-          class="absolute inset-0 bg-white/50 z-50 flex items-center justify-center"
-        >
-          <div class="animate-pulse z-50"></div>
-        </div>
-      {/if}
       <button
-        class="fixed z-20 top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+        class="fixed z-50 top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 shadow-lg flex items-center gap-2 font-bold"
         onclick={saveMenu}
       >
-        Save
+        {#if isLoading}
+          <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        {/if}
+        Save Changes
       </button>
-      <div class="flex-1 relative h-full overflow-x-auto">
-        <div class="flex gap-4 p-4 min-w-max">
+      {#if isLoading}
+        <div
+          class="absolute inset-0 bg-white/50 z-40 flex items-center justify-center"
+        >
+          <div class="animate-pulse"></div>
+        </div>
+      {/if}
+      <div class="flex-1 relative overflow-x-auto">
+        <div class="flex gap-4 p-4 min-w-max h-screen">
           {#each Object.keys(items) as day}
-            <Col class="h-full flex flex-col min-w-[300px]">
+            <Col class="h-full flex flex-col min-w-[300px] max-h-screen">
               <h1
-                class="text-center font-bold text-2xl pb-4 sticky top-0 bg-gray-200"
+                class="text-center font-bold text-2xl pb-4 bg-gray-200 z-20"
               >
                 {day}
               </h1>
-              <div class="overflow-y-auto">
+              <div class="overflow-y-auto flex-1 pr-2">
                 {#each Object.keys(items[day]) as category}
                   <Col>
                     <div
-                      class="flex justify-center w-full gap-2 items-center sticky top-0 bg-gray-200 z-10"
+                      class="flex justify-center w-full gap-2 items-center bg-gray-200 z-10 sticky top-0 py-2"
                     >
                       <input
                         type="text"
@@ -197,12 +201,14 @@
                     {/each}
                   </Col>
                 {/each}
-                <button
-                  onclick={() => newCategory(day)}
-                  class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
-                >
-                  New Category
-                </button>
+                <div class="py-4">
+                  <button
+                    onclick={() => newCategory(day)}
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+                  >
+                    New Category
+                  </button>
+                </div>
               </div>
             </Col>
           {/each}
