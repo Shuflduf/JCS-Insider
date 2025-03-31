@@ -197,14 +197,12 @@
                     {/each}
                   </Col>
                 {/each}
-                <div class="pt-4">
-                  <button
-                    onclick={() => newCategory(day)}
-                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
-                  >
-                    New Category
-                  </button>
-                </div>
+                <button
+                  onclick={() => newCategory(day)}
+                  class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+                >
+                  New Category
+                </button>
               </div>
             </Col>
           {/each}
