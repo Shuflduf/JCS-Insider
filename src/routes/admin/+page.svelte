@@ -3,10 +3,11 @@
   import { cubicInOut } from "svelte/easing";
   import { Tween } from "svelte/motion";
   import { fade } from "svelte/transition";
-  import { getMenu } from "./appwrite";
+  import { getMenu, updateMenu } from "./appwrite";
   import type { MenuData } from "./appwrite";
   import Col from "$lib/col.svelte";
   import Row from "$lib/row.svelte";
+  import Toast from "$lib/toast.svelte";
 
   let password = $state("");
   let isAuthenticated = $state(false);
@@ -38,6 +39,11 @@
   });
   sideWidth.set(400);
 
+  let showToast = $state(false);
+  let toastMessage = $state("");
+  let toastType = $state<"success" | "error">("success");
+  let isLoading = $state(false);
+
   function checkPassword() {
     if (password === correctPassword) {
       isTransitioning = true;
@@ -49,6 +55,24 @@
       }, 700);
     } else {
       alert("Incorrect password");
+    }
+  }
+
+  async function saveMenu() {
+    isLoading = true;
+    try {
+      await updateMenu(items);
+      items = await getMenu();
+      toastMessage = "Menu saved successfully";
+      toastType = "success";
+    } catch (error) {
+      toastMessage = "Error saving menu";
+      toastType = "error";
+      console.error("Error saving menu:", error);
+    } finally {
+      showToast = true;
+      setTimeout(() => (showToast = false), 3000);
+      isLoading = false;
     }
   }
 
@@ -84,74 +108,107 @@
     : 'bg-gray-300'}"
 >
   {#if isAuthenticated}
-    <div class="flex w-full h-screen overflow-hidden" transition:fade>
-      <div class="flex-1 flex gap-4 p-4 relative h-full">
-        {#each Object.keys(items) as day}
-          <Col class="h-full flex flex-col min-w-[300px]">
-            <h1
-              class="text-center font-bold text-2xl pb-4 sticky top-0 bg-gray-200"
-            >
-              {day}
-            </h1>
-            <div class="overflow-y-auto flex-1">
-              {#each Object.keys(items[day]) as category}
-                <Col>
-                  <div
-                    class="flex justify-center w-full gap-4 items-center sticky top-0 bg-gray-200"
-                  >
-                    <h2 class="font-bold text-xl">{category}</h2>
-                    <button
-                      onclick={() => newItem(day, category)}
-                      class="m-2 p-2 rounded flex items-center justify-center bg-blue-500 text-white hover:bg-blue-700"
-                    >
-                      New Item</button
-                    >
-                  </div>
-                  {#each items[day][category] as item}
+    <div
+      class="flex w-full h-screen overflow-hidden relative {isLoading
+        ? 'pointer-events-none'
+        : ''}"
+      transition:fade
+    >
+      {#if isLoading}
+        <div
+          class="absolute inset-0 bg-white/50 z-50 flex items-center justify-center"
+        >
+          <div class="animate-pulse z-50"></div>
+        </div>
+      {/if}
+      <button
+        class="fixed z-20 top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700"
+        onclick={saveMenu}
+      >
+        Save
+      </button>
+      <div class="flex-1 relative h-full overflow-x-auto">
+        <div class="flex gap-4 p-4 min-w-max">
+          {#each Object.keys(items) as day}
+            <Col class="h-full flex flex-col min-w-[300px]">
+              <h1
+                class="text-center font-bold text-2xl pb-4 sticky top-0 bg-gray-200"
+              >
+                {day}
+              </h1>
+              <div class="overflow-y-auto">
+                {#each Object.keys(items[day]) as category}
+                  <Col>
                     <div
-                      class="bg-white rounded-lg shadow-md mb-4 p-4 relative w-full"
+                      class="flex justify-center w-full gap-2 items-center sticky top-0 bg-gray-200 z-10"
                     >
                       <input
                         type="text"
-                        placeholder="Name"
-                        class="border border-gray-300 p-2 rounded w-full mb-4"
-                        bind:value={item.name}
+                        placeholder="Category Name"
+                        class="border border-gray-300 p-2 rounded font-bold text-lg"
+                        value={category}
+                        oninput={(e) => {
+                          const newCategory = e.currentTarget.value;
+                          if (newCategory !== category) {
+                            items[day][newCategory] = items[day][category];
+                            delete items[day][category];
+                            items = items;
+                          }
+                        }}
                       />
-                      <Row>
-                        <input
-                          type="number"
-                          step="0.01"
-                          placeholder="Price"
-                          class="border border-gray-300 p-2 rounded w-full mb-4"
-                          bind:value={item.price}
-                        />
-                        <button
-                          class="bg-red-500 text-white px-4 py-2 h-min rounded hover:bg-red-700"
-                          onclick={() =>
-                            deleteItem(
-                              day,
-                              category,
-                              items[day][category].indexOf(item),
-                            )}
-                        >
-                          Delete
-                        </button>
-                      </Row>
+                      <button
+                        onclick={() => newItem(day, category)}
+                        class="m-2 p-2 min-w-24 rounded flex items-center justify-center bg-blue-500 text-white hover:bg-blue-700"
+                      >
+                        New Item</button
+                      >
                     </div>
-                  {/each}
-                </Col>
-              {/each}
-            </div>
-            <div class="mt-auto pt-4">
-              <button
-                onclick={() => newCategory(day)}
-                class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
-              >
-                New Category
-              </button>
-            </div>
-          </Col>
-        {/each}
+                    {#each items[day][category] as item}
+                      <div
+                        class="bg-white rounded-lg shadow-md mb-4 p-4 relative w-full"
+                      >
+                        <input
+                          type="text"
+                          placeholder="Name"
+                          class="border border-gray-300 p-2 rounded w-full mb-4"
+                          bind:value={item.name}
+                        />
+                        <Row>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="Price"
+                            class="border border-gray-300 p-2 rounded w-full mb-4"
+                            bind:value={item.price}
+                          />
+                          <button
+                            class="bg-red-500 text-white px-4 py-2 h-min rounded hover:bg-red-700"
+                            onclick={() =>
+                              deleteItem(
+                                day,
+                                category,
+                                items[day][category].indexOf(item),
+                              )}
+                          >
+                            Delete
+                          </button>
+                        </Row>
+                      </div>
+                    {/each}
+                  </Col>
+                {/each}
+                <div class="pt-4">
+                  <button
+                    onclick={() => newCategory(day)}
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-700 w-full"
+                  >
+                    New Category
+                  </button>
+                </div>
+              </div>
+            </Col>
+          {/each}
+        </div>
       </div>
     </div>
   {:else}
@@ -189,5 +246,8 @@
 
       <div class="flex-1" style="max-width: {sideWidth.current}px"></div>
     </div>
+  {/if}
+  {#if showToast}
+    <Toast message={toastMessage} type={toastType} />
   {/if}
 </div>
