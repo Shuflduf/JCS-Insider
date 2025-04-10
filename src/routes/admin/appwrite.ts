@@ -6,7 +6,7 @@ const client = new Client()
 
 const databases = new Databases(client);
 
-const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday'];
 
 export interface MenuData {
   [weekday: string]: {
