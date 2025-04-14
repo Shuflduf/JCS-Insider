@@ -11,38 +11,41 @@ export const GET: RequestHandler = async (event) => {
         defaultViewport: null,
     });
 
-    // Open a new page
     const page = await browser.newPage();
-
-    // On this new page:
-    // - open the "http://quotes.toscrape.com/" website
-    // - wait until the dom content is loaded (HTML is ready)
     await page.goto("https://joanecardinalschubert.cbe.ab.ca/news-centre", {
         waitUntil: "networkidle2",
-    });
-
-    await page.waitForSelector('input.checkbox-tag[name="weekly update"]', {
-        timeout: 5000
     });
 
     await page.click('input.checkbox-tag[name="weekly update"]');
     await page.waitForNetworkIdle()
 
-    const firstArticle = await page.evaluate(() => {
-        const articles = document.querySelectorAll('.news-article');
+    const articles = await page.evaluate(() => {
+        const allArticles = document.querySelectorAll('.news-article');
 
-        return Array.from(articles).map((page) => {
-            // Fetch the sub-elements from the previously fetched quote element
-            // Get the displayed text and return it (`.innerText`)
-
+        return Array.from(allArticles).map((page) => {
             return page.querySelector("a")?.href;
         });
 
     });
-    console.log(firstArticle)
+    console.log(articles[0])
+
+    await page.goto(articles[0], {
+        waitUntil: "networkidle2"
+    })
+
+    const html = await page.content()
+    fs.writeFileSync("page.html", html)
+
+
+    const res = await page.evaluate(() => {
+        const foodMenu = document.querySelector("#cravens-menu")
+        console.log(foodMenu)
+    })
+    console.log(res)
+
 
     // Close the browser
-    await browser.close();
+    //await browser.close();
 
     return new Response({})
 };
