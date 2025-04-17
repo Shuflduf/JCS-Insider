@@ -33,19 +33,30 @@ export const GET: RequestHandler = async (event) => {
         waitUntil: "networkidle2"
     })
 
-    const html = await page.content()
-    fs.writeFileSync("page.html", html)
+    await page.waitForSelector("#cravens-menu", { timeout: 5000 })
 
+    const frames = await page.frames();
+    const targetFrame = frames.find(frame => frame !== page.mainFrame());
+
+    if (!targetFrame) {
+        throw new Error('Could not find iframe');
+    }
+
+    const content = await targetFrame.evaluate(() => {
+        const editor = document.querySelector("#cravens-menu");
+        return editor ? editor.innerHTML : null;
+    });
+    console.log(content?.innerHTML)
 
     const res = await page.evaluate(() => {
         const foodMenu = document.querySelector("#cravens-menu")
-        console.log(foodMenu)
+        return foodMenu
     })
-    console.log(res)
+    console.log(res?.className)
 
 
     // Close the browser
-    //await browser.close();
+    await browser.close();
 
     return new Response({})
 };

@@ -67,7 +67,7 @@ export async function updateMenu(newMenu: MenuData) {
 export async function getMenu(): Promise<MenuData> {
   try {
     const result = await databases.listDocuments("main", "items");
-    console.log(result);
+    //console.log(result);
 
     const final: MenuData = {};
 
