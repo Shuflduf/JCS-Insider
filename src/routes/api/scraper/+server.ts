@@ -23,7 +23,7 @@ export const GET: RequestHandler = async (event) => {
     const result = await page.evaluate(() => {
         const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday"];
         const menu = document.querySelector("#cravens-menu") as HTMLDivElement;
-        let nextSibling = menu.nextElementSibling as HTMLDivElement;
+        let nextSibling: HTMLDivElement = menu.nextElementSibling as HTMLDivElement;
         let siblings: HTMLDivElement[] = [];
         let tree: any = {};
         let currentWeekday: string = ""
@@ -33,14 +33,22 @@ export const GET: RequestHandler = async (event) => {
                     currentWeekday = weekday
                     currentWeekday.trim()
                     tree[currentWeekday] = [];
+                    nextSibling = nextSibling.nextElementSibling as HTMLDivElement;
                     // tree[weekday] = nextSibling.innerText;
                 }
             });
-            tree[currentWeekday]
-            siblings.push(nextSibling as HTMLDivElement);
+
+            let foodText = nextSibling.innerText;
+
+            let [category, value] = foodText.split(":")
+
+
+            foodText.trim()
+            tree[currentWeekday].push(foodText)
+
+            // siblings.push(nextSibling as HTMLDivElement);
             nextSibling = nextSibling.nextElementSibling as HTMLDivElement;
         }
-
 
 
         return tree
