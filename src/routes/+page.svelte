@@ -17,12 +17,12 @@
 {:then data}
     <p>{JSON.stringify(data)}</p>
 
-    <div class="flex justify-evenly  menu-table">
+    <div class="flex justify-evenly menu-table">
         {#each Object.entries(data) as [weekday, dayData]}
             <div
                 class="w-1/4 text-center text-3xl font-bold flex flex-col flex-wrap days"
             >
-                {weekday}
+                <h1 class="weekday">{weekday}</h1>
                 {#each Object.entries(dayData) as [categoryName, categoryData]}
                     <h1 class="font-normal rows">{categoryName}</h1>
                     {#each Object.entries(categoryData) as [_, item]}

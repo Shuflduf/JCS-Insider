@@ -2,19 +2,18 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
-.menu-table{
+.menu-table {
     border-width: thick;
     background-color: rgb(202, 57, 76);
-    border-color:black;
+    border-color: black;
     border-top: 2pt solid rgb(0, 0, 0) !important;
 }
 
-.days{
- 
+.days {
+
     border-bottom: 2pt solid black !important;
 }
 
-.rows{
+.weekday {
     border-bottom: 2pt solid black !important;
 }
-
