@@ -2,6 +2,7 @@ import fs from 'fs';
 import puppeteer from "puppeteer";
 import type { RequestHandler } from './$types';
 
+const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday"];
 
 export const GET: RequestHandler = async (event) => {
     // Start a Puppeteer session with:
@@ -15,63 +16,66 @@ export const GET: RequestHandler = async (event) => {
     const page = await browser.newPage();
     // const latestPostUrl = await getLatestPostUrl();
     const latestPostUrl = "https://joanecardinalschubert.cbe.ab.ca/news/50218c72-8b11-41bf-8871-61d54f6d01d5"
+    console.log("Found page: ", latestPostUrl)
     await page.goto(latestPostUrl, {
         waitUntil: "networkidle2",
     });
 
     await page.waitForSelector("#cravens-menu", { timeout: 5000 })
     const result = await page.evaluate(() => {
-        const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday"];
         const menu = document.querySelector("#cravens-menu") as HTMLDivElement;
         let nextSibling: HTMLDivElement = menu.nextElementSibling as HTMLDivElement;
-        let siblings: HTMLDivElement[] = [];
-        let tree: any = {};
-        let currentWeekday: string = ""
+        let data: string[] = []
         while (nextSibling && nextSibling.tagName !== "DIV") {
-            WEEKDAYS.forEach(weekday => {
-                if (nextSibling.innerText.startsWith(weekday)) {
-                    currentWeekday = weekday
-                    currentWeekday.trim()
-                    tree[currentWeekday] = [];
-                    nextSibling = nextSibling.nextElementSibling as HTMLDivElement;
-                    // tree[weekday] = nextSibling.innerText;
-                }
-            });
 
             let foodText = nextSibling.innerText;
 
-            let [category, value] = foodText.split(":")
-
-
-            foodText.trim()
-            tree[currentWeekday].push(foodText)
-
-            // siblings.push(nextSibling as HTMLDivElement);
+            data.push(foodText)
             nextSibling = nextSibling.nextElementSibling as HTMLDivElement;
         }
 
 
-        return tree
+        return data
         // return siblings.map((sibling) => {
         //     return sibling.innerText;
         // })
     });
+    console.log(result)
 
-    console.log(result);
+    let tree: {
+        [weekday: string]: {
+            [foodType: string]: string;
+        };
+    } = {};
+    let currentWeekday: string = ""
+    result.forEach(item => {
+        let isWeekday = false
+        WEEKDAYS.forEach(weekday => {
+            if (item.startsWith(weekday)) {
+                console.log("Found weekday: ", weekday)
+                item.trim()
+                tree[weekday] = {};
+                currentWeekday = weekday
+                isWeekday = true
+            }
+        })
+        if (!isWeekday) {
+            if (currentWeekday) {
+                let itemData = item.split(": ");
+                console.log("Item data: ", itemData)
+                if (itemData.length === 2) {
+                    const [key, value] = itemData;
+                    tree[currentWeekday][key.trim()] = value.trim();
+                }
+            }
+        }
+    });
 
-    // const frames = await page.frames();
-
-    // console.log(frames);
-    // const eoriw = await frames[1].evaluate(() => {
-    //     const menu = document.querySelector("#cravens-menu");
-    //     return menu;
-    // })
-    // console.log(eoriw)
-
+    console.log(tree)
 
     await browser.close();
 
-    return new Response({})
+    return new Response(JSON.stringify(tree))
 };
 
 async function getLatestPostUrl(): Promise<string> {

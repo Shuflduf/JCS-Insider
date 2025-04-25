@@ -2,9 +2,9 @@
     import { onMount } from "svelte";
     import { getMenu, type MenuData } from "./admin/appwrite";
 
-    let menu: Promise<MenuData> = $state(getMenu());
-
+    let menu: Promise<MenuData> = $state(Promise.resolve({}));
     onMount(async () => {
+        menu = getMenu();
         fetch("/api/scraper");
     });
 </script>
