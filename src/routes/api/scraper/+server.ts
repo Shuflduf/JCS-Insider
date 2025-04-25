@@ -4,6 +4,12 @@ import type { RequestHandler } from './$types';
 
 const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday"];
 
+export interface ScrapedData {
+    [weekday: string]: {
+        [foodType: string]: string;
+    };
+}
+
 export const GET: RequestHandler = async (event) => {
     // Start a Puppeteer session with:
     // - a visible browser (`headless: false` - easier to debug because you'll see the browser in action)
@@ -42,11 +48,7 @@ export const GET: RequestHandler = async (event) => {
     });
     console.log(result)
 
-    let tree: {
-        [weekday: string]: {
-            [foodType: string]: string;
-        };
-    } = {};
+    let tree: ScrapedData = {};
     let currentWeekday: string = ""
     result.forEach(item => {
         let isWeekday = false

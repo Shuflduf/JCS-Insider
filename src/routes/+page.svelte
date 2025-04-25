@@ -1,39 +1,42 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { getMenu, type MenuData } from "./admin/appwrite";
+    import type { ScrapedData } from "./api/scraper/+server";
 
-    let menu: Promise<MenuData> = $state(Promise.resolve({}));
+    let scrapedMenu: Promise<ScrapedData> | null = $state(null);
     onMount(async () => {
-        menu = getMenu();
-        fetch("/api/scraper");
+        let scraperData = await fetch("/api/scraper");
+        scrapedMenu = scraperData.json();
+        console.log(await scrapedMenu);
     });
 </script>
 
-<h1 class="justify-center text-center">JCS Insider</h1>
-<p>Test</p>
+<h1 class="justify-center text-center text-4xl font-bold">JCS Insider</h1>
 
-{#await menu}
-    <p>Loading...</p>
-{:then data}
-    <p>{JSON.stringify(data)}</p>
-
-    <div class="flex justify-evenly menu-table">
-        {#each Object.entries(data) as [weekday, dayData]}
-            <div
-                class="w-1/4 text-center text-3xl font-bold flex flex-col flex-wrap days"
-            >
-                <h1 class="weekday">{weekday}</h1>
-                {#each Object.entries(dayData) as [categoryName, categoryData]}
-                    <h1 class="font-normal rows">{categoryName}</h1>
-                    {#each Object.entries(categoryData) as [_, item]}
-                        <h1 class="font-normal text-base items">
-                            {item.name} (${item.price})
-                        </h1>
-                    {/each}
-                {/each}
-            </div>
-        {/each}
+{#if !scrapedMenu}
+    <div class="flex justify-center items-center h-80 w-full">
+        <h1 class="w-full text-3xl text-center">Loading Menu...</h1>
     </div>
-{:catch error}
-    <p>{error.message}</p>
-{/await}
+{:else}
+    {#await scrapedMenu}
+        <p>Loading...</p>
+    {:then data}
+        <!-- <pre>{JSON.stringify(data, null, 2)}</pre> -->
+        <div class="flex justify-evenly menu-table">
+            {#each Object.entries(data) as [weekday, dayData]}
+                <div
+                    class="w-1/4 text-center text-3xl font-bold flex flex-col flex-wrap days"
+                >
+                    <h1 class="weekday">{weekday}</h1>
+                    {#each Object.entries(dayData) as [categoryName, categoryData]}
+                        <h2 class="font-normal rows">{categoryName}</h2>
+                        <p class="font-normal text-base items mb-4">
+                            {categoryData}
+                        </p>
+                    {/each}
+                </div>
+            {/each}
+        </div>
+    {:catch error}
+        <p>{error.message}</p>
+    {/await}
+{/if}
