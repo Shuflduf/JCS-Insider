@@ -20,7 +20,7 @@
     {#await scrapedMenu}
         <p>Loading...</p>
     {:then data}
-        <!-- <pre>{JSON.stringify(data, null, 2)}</pre> -->
+
         <div class="flex justify-evenly menu-table">
             {#each Object.entries(data) as [weekday, dayData]}
                 <div

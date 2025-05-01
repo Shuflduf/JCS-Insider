@@ -2,18 +2,27 @@
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
 
+html {
+    background-color: white;
+    color: #0f172a;
+}
+
 .menu-table {
     border-width: thick;
-    background-color: rgb(202, 57, 76);
+    background-color:#f1f5f9;
     border-color: black;
-    border-top: 2pt solid rgb(0, 0, 0) !important;
+    gap: 4em;
+    border-top: 2pt solid rgb(0, 0, 0);
 }
 
 .days {
-
-    border-bottom: 2pt solid black !important;
+    border: 2pt solid #475569;
 }
 
 .weekday {
-    border-bottom: 2pt solid black !important;
+    border-bottom: 4pt solid #475569;
+}
+
+.rows {
+    border-top: 2pt dashed #475569;
 }
