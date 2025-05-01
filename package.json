@@ -10,7 +10,11 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"postinstall": "npx puppeteer browsers install chrome"
+		"postinstall": "npx puppeteer browsers install chrome",
+		"install": "npx puppeteer browsers install chrome",
+		"preinstall": "npx puppeteer browsers install chrome",
+		"prestart": "npx puppeteer browsers install chrome",
+		"start": "npx puppeteer browsers install chrome"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-auto": "^4.0.0",
