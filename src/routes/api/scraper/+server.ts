@@ -27,7 +27,6 @@ async function getLatestPostUrl(): Promise<string> {
     const browser = await puppeteer.launch({
         headless: false,
         defaultViewport: null,
-        browser: 'firefox',
     });
 
     const page = await browser.newPage();
@@ -58,7 +57,6 @@ async function getLatestPostUrl(): Promise<string> {
 async function getBlogData(url: string): Promise<string[]> {
     const browser = await puppeteer.launch({
         headless: false,
-        browser: 'firefox',
         defaultViewport: null,
     });
 
