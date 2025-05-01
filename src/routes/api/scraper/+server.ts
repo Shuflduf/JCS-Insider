@@ -11,77 +11,19 @@ export interface ScrapedData {
 }
 
 export const GET: RequestHandler = async (event) => {
-    // Start a Puppeteer session with:
-    // - a visible browser (`headless: false` - easier to debug because you'll see the browser in action)
-    // - no default viewport (`defaultViewport: null` - website page will in full width and height)
-    const browser = await puppeteer.launch({
-        headless: true,
-        defaultViewport: null,
-    });
-
-    const page = await browser.newPage();
     // const latestPostUrl = await getLatestPostUrl();
     const latestPostUrl = "https://joanecardinalschubert.cbe.ab.ca/news/50218c72-8b11-41bf-8871-61d54f6d01d5"
     console.log("Found page: ", latestPostUrl)
-    await page.goto(latestPostUrl, {
-        waitUntil: "networkidle2",
-    });
 
-    await page.waitForSelector("#cravens-menu", { timeout: 5000 })
-    const result = await page.evaluate(() => {
-        const menu = document.querySelector("#cravens-menu") as HTMLDivElement;
-        let nextSibling: HTMLDivElement = menu.nextElementSibling as HTMLDivElement;
-        let data: string[] = []
-        while (nextSibling && nextSibling.tagName !== "DIV") {
-
-            let foodText = nextSibling.innerText;
-
-            data.push(foodText)
-            nextSibling = nextSibling.nextElementSibling as HTMLDivElement;
-        }
-
-
-        return data
-        // return siblings.map((sibling) => {
-        //     return sibling.innerText;
-        // })
-    });
-    console.log(result)
-
-    let tree: ScrapedData = {};
-    let currentWeekday: string = ""
-    result.forEach(item => {
-        let isWeekday = false
-        WEEKDAYS.forEach(weekday => {
-            if (item.startsWith(weekday)) {
-                console.log("Found weekday: ", weekday)
-                item.trim()
-                tree[weekday] = {};
-                currentWeekday = weekday
-                isWeekday = true
-            }
-        })
-        if (!isWeekday) {
-            if (currentWeekday) {
-                let itemData = item.split(": ");
-                console.log("Item data: ", itemData)
-                if (itemData.length === 2) {
-                    const [key, value] = itemData;
-                    tree[currentWeekday][key.trim()] = value.trim();
-                }
-            }
-        }
-    });
+    let result: string[] = await getBlogData(latestPostUrl)
+    let tree: ScrapedData = parseData(result)
 
     console.log(tree)
-
-    await browser.close();
 
     return new Response(JSON.stringify(tree))
 };
 
 async function getLatestPostUrl(): Promise<string> {
-
     const browser = await puppeteer.launch({
         headless: false,
         defaultViewport: null,
@@ -106,7 +48,68 @@ async function getLatestPostUrl(): Promise<string> {
 
     await browser.close();
 
-    console.log(articles[0]);
+    // console.log(articles[0]);
     return articles[0] ?? ""
 
+}
+
+
+async function getBlogData(url: string): Promise<string[]> {
+    const browser = await puppeteer.launch({
+        headless: false,
+        defaultViewport: null,
+    });
+
+    const page = await browser.newPage();
+    await page.goto(url, {
+        waitUntil: "networkidle2",
+    });
+
+    await page.waitForSelector("#cravens-menu", { timeout: 5000 })
+    const result = await page.evaluate(() => {
+        const menu = document.querySelector("#cravens-menu") as HTMLDivElement;
+        let nextSibling: HTMLDivElement = menu.nextElementSibling as HTMLDivElement;
+        let data: string[] = []
+        while (nextSibling && nextSibling.tagName !== "DIV") {
+
+            let foodText = nextSibling.innerText;
+
+            data.push(foodText)
+            nextSibling = nextSibling.nextElementSibling as HTMLDivElement;
+        }
+
+
+        return data
+    });
+
+    browser.close();
+    return result
+}
+
+function parseData(data: string[]): ScrapedData {
+    let tree: ScrapedData = {};
+    let currentWeekday: string = ""
+    data.forEach(item => {
+        let isWeekday = false
+        WEEKDAYS.forEach(weekday => {
+            if (item.startsWith(weekday)) {
+                console.log("Found weekday: ", weekday)
+                item.trim()
+                tree[weekday] = {};
+                currentWeekday = weekday
+                isWeekday = true
+            }
+        })
+        if (!isWeekday) {
+            if (currentWeekday) {
+                let itemData = item.split(": ");
+                console.log("Item data: ", itemData)
+                if (itemData.length === 2) {
+                    const [key, value] = itemData;
+                    tree[currentWeekday][key.trim()] = value.trim();
+                }
+            }
+        }
+    });
+    return tree
 }
