@@ -40,7 +40,7 @@
     {/await}
 {/if}
 
-<div
+<!-- <div
     class="min-h-screen bg-gradient-to-b from-yellow-400 via-red-600 to-black text-white py-8 px-4"
 >
     <h1 class="text-5xl font-extrabold text-center mb-4 drop-shadow-md">
@@ -85,4 +85,4 @@
     {:catch error}
         <p class="text-center text-red-200">{error.message}</p>
     {/await}
-</div>
+</div> -->
