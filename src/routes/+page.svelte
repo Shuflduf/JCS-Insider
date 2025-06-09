@@ -8,6 +8,12 @@
         scrapedMenu = scraperData.json();
         console.log(await scrapedMenu);
     });
+
+    const prices: any = {
+        pizza: "$4.50",
+        soup: "$3.00",
+        main: "$5.00",
+    };
 </script>
 
 <h1 class="justify-center text-center text-4xl font-bold">JCS Insider</h1>
@@ -27,7 +33,15 @@
                 >
                     <h1 class="weekday">{weekday}</h1>
                     {#each Object.entries(dayData) as [categoryName, categoryData]}
-                        <h2 class="font-normal rows">{categoryName}</h2>
+                        <h2 class="font-normal rows">
+                            {categoryName}{#if prices[categoryName.toLowerCase()]}
+                                <span>
+                                    &nbsp({prices[
+                                        categoryName.toLowerCase()
+                                    ]})</span
+                                >
+                            {/if}
+                        </h2>
                         <p class="font-normal text-base items mb-4">
                             {categoryData}
                         </p>
