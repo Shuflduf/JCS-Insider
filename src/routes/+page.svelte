@@ -16,11 +16,11 @@
     };
 </script>
 
-<h1 class="justify-center text-center text-4xl font-bold">JCS Insider</h1>
+<h1 class="justify-center text-center text-4xl font-bold text-white">JCS Insider</h1>
 
 {#if !scrapedMenu}
     <div class="flex justify-center items-center h-80 w-full">
-        <h1 class="w-full text-3xl text-center">Loading Menu...</h1>
+        <h1 class="w-full text-3xl text-center text-white">Loading Menu...</h1>
     </div>
 {:else}
     {#await scrapedMenu}
