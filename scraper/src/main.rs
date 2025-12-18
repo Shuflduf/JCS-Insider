@@ -17,6 +17,42 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 fn get_menu_from_url(url: &str) -> Result<String, Box<dyn Error>> {
+    let request = reqwest::blocking::Request::new(Method::GET, Url::parse(url).unwrap());
+    let page_html = reqwest::blocking::ClientBuilder::new()
+        .user_agent("Mozilla/5.0 (X11; Linux x86_64; rv:145.0) Gecko/20100101 Firefox/145.0")
+        .build()
+        .unwrap()
+        .execute(request)
+        .unwrap()
+        .text()
+        .unwrap();
+    let page_content = scraper::Html::parse_document(&page_html);
+    let craven_cafe_header = page_content
+        .select(&Selector::parse("#Craven-Caf")?)
+        .next()
+        .unwrap();
+    for weekday in craven_cafe_header.next_siblings() {
+        let mut child_iter = weekday.children();
+        let weekday_name = if let Some(name) = child_iter.next() {
+            let weekday_name = name.first_child().unwrap().first_child().unwrap().value();
+            // if elem.as_element().unwrap().name
+
+            for could_be_item in child_iter {
+                let elem = could_be_item.value().as_element().unwrap();
+                if elem.name() == "br" {
+                    continue;
+                }
+                println!("{:?}", could_be_item.first_child().unwrap().value());
+            }
+
+            weekday_name
+        } else {
+            break;
+        };
+    }
+
+    println!("{craven_cafe_header:?}");
+
     Ok("A".to_string())
 }
 
