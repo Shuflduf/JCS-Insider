@@ -1,22 +1,63 @@
-use std::{collections::HashMap, error::Error};
+use std::{
+    collections::HashMap,
+    error::Error,
+    io::prelude::*,
+    net::{TcpListener, TcpStream},
+    time::SystemTime,
+};
 
-use reqwest::{Client, Method, Request, Url, blocking::ClientBuilder};
+use reqwest::{Method, Url};
 use scraper::Selector;
+use serde::Serialize;
 
 const BASE_JCS_URL: &str = "https://joanecardinalschubert.cbe.ab.ca";
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 struct Menu(HashMap<String, Vec<String>>);
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // let latest_post_url = get_latest_post()?;
-    let latest_post_url =
-        "https://joanecardinalschubert.cbe.ab.ca/news/raven-post-december-12-2025-20251215180023";
-    let week_menu = get_menu_from_url(&latest_post_url)?;
+    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
 
-    println!("{week_menu:#?}");
+    let mut cached_time = SystemTime::now();
+    let mut json_resp = get_new_menu_str();
+
+    for stream in listener.incoming() {
+        let duraction_since_last_req = SystemTime::now().duration_since(cached_time).unwrap();
+        if duraction_since_last_req.as_secs() > 60 * 60 {
+            json_resp = get_new_menu_str();
+            cached_time = SystemTime::now()
+        }
+        // println!("{duraction_since_last_req:?}");
+
+        let stream = stream.unwrap();
+        handle_connection(stream, &json_resp);
+    }
 
     Ok(())
+}
+
+fn get_new_menu_str() -> String {
+    let latest_post_url =
+        "https://joanecardinalschubert.cbe.ab.ca/news/raven-post-december-12-2025-20251215180023";
+    let week_menu = get_menu_from_url(latest_post_url).unwrap();
+    serde_json::to_string(&week_menu).unwrap()
+}
+
+fn handle_connection(mut stream: TcpStream, contents: &str) {
+    // let buf_reader = BufReader::new(&stream);
+    // let http_request: Vec<_> = buf_reader
+    //     .lines()
+    //     .map(|result| result.unwrap())
+    //     .take_while(|line| !line.is_empty())
+    //     .collect();
+
+    // println!("Request: {http_request:#?}");
+    let status_line = "HTTP/1.1 200 OK";
+    let length = contents.len();
+
+    let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
+
+    stream.write_all(response.as_bytes()).unwrap();
 }
 
 fn get_menu_from_url(url: &str) -> Result<Menu, Box<dyn Error>> {
@@ -38,7 +79,7 @@ fn get_menu_from_url(url: &str) -> Result<Menu, Box<dyn Error>> {
     let mut menu = Menu(HashMap::new());
     for weekday in craven_cafe_header.next_siblings() {
         let mut child_iter = weekday.children();
-        let weekday_name = if let Some(name) = child_iter.next() {
+        if let Some(name) = child_iter.next() {
             let weekday_name = name
                 .first_child()
                 .unwrap()
@@ -67,7 +108,7 @@ fn get_menu_from_url(url: &str) -> Result<Menu, Box<dyn Error>> {
                 };
                 menu.0
                     .entry(weekday_name.clone())
-                    .or_insert(vec![])
+                    .or_default()
                     .push(item_name.clone());
             }
         } else {
@@ -75,7 +116,7 @@ fn get_menu_from_url(url: &str) -> Result<Menu, Box<dyn Error>> {
         };
     }
 
-    println!("{menu:?}");
+    // println!("{menu:?}");
 
     Ok(menu)
 }
@@ -100,10 +141,10 @@ fn get_latest_post() -> Result<String, Box<dyn Error>> {
         .unwrap()
         .attr("href");
 
-    println!("{raven_post_link:?}");
+    // println!("{raven_post_link:?}");
     if let Some(post_url) = raven_post_link {
-        return Ok(post_url.to_string());
+        Ok(post_url.to_string())
     } else {
-        return Err("Failed to find URL".into());
+        Err("Failed to find URL".into())
     }
 }
