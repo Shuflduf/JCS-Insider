@@ -32,18 +32,20 @@
                     class="w-1/4 text-center text-3xl font-bold flex flex-col flex-wrap days"
                 >
                     <h1 class="weekday">{weekday}</h1>
-                    {#each Object.entries(dayData) as [categoryName, categoryData]}
+                    {#each dayData as categoryData}
                         <h2 class="font-normal rows">
-                            {categoryName}{#if prices[categoryName.toLowerCase()]}
+                            {#if categoryData.split(": ")[0]}
                                 <span>
-                                    &nbsp({prices[
-                                        categoryName.toLowerCase()
-                                    ]})</span
-                                >
+                                        {categoryData.split(": ")[0]}
+                                </span>
                             {/if}
                         </h2>
                         <p class="font-normal text-base items mb-4">
-                            {categoryData}
+                            {#if categoryData.split(": ")[1]}
+                                <span>
+                                        {categoryData.split(": ")[1]}
+                                </span>
+                            {/if}
                         </p>
                     {/each}
                 </div>

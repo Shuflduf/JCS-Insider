@@ -17,16 +17,17 @@ export interface ScrapedData {
 }
 
 export const GET: RequestHandler = async (event) => {
+    const menu_str = await fetch("http://127.0.0.1:7878")
     // const latestPostUrl = await getLatestPostUrl();
-    const latestPostUrl = "https://joanecardinalschubert.cbe.ab.ca/news/50218c72-8b11-41bf-8871-61d54f6d01d5"
-    console.log("Found page: ", latestPostUrl)
+    // const latestPostUrl = "https://joanecardinalschubert.cbe.ab.ca/news/50218c72-8b11-41bf-8871-61d54f6d01d5"
+    // console.log("Found page: ", latestPostUrl)
 
-    let result: string[] = await getBlogData(latestPostUrl)
-    let tree: ScrapedData = parseData(result)
+    // let result: string[] = await getBlogData(latestPostUrl)
+    // let tree: ScrapedData = parseData(result)
 
-    console.log(tree)
+    // console.log(tree)
 
-    return new Response(JSON.stringify(tree))
+    return new Response(await menu_str.text())
 };
 
 async function getLatestPostUrl(): Promise<string> {
