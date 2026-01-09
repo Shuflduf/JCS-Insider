@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     error::Error,
-    io::prelude::*,
+    io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
     time::SystemTime,
 };
@@ -27,7 +27,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             json_resp = get_new_menu_str();
             cached_time = SystemTime::now()
         }
-        // println!("{duraction_since_last_req:?}");
 
         let stream = stream.unwrap();
         handle_connection(stream, &json_resp);
@@ -44,12 +43,12 @@ fn get_new_menu_str() -> String {
 }
 
 fn handle_connection(mut stream: TcpStream, contents: &str) {
-    // let buf_reader = BufReader::new(&stream);
-    // let http_request: Vec<_> = buf_reader
-    //     .lines()
-    //     .map(|result| result.unwrap())
-    //     .take_while(|line| !line.is_empty())
-    //     .collect();
+    let buf_reader = BufReader::new(&stream);
+    let _http_request: Vec<_> = buf_reader
+        .lines()
+        .map(|result| result.unwrap())
+        .take_while(|line| !line.is_empty())
+        .collect();
 
     // println!("Request: {http_request:#?}");
     let status_line = "HTTP/1.1 200 OK";
