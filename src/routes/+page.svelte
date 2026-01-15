@@ -2,6 +2,14 @@
     import { onMount } from "svelte";
     import type { ScrapedData } from "./api/scraper/+server";
 
+    const DAYS = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+    ]
+
     let scrapedMenu: Promise<ScrapedData> | null = $state(null);
     onMount(async () => {
         let scraperData = await fetch("/api/scraper");
@@ -9,11 +17,15 @@
         console.log(await scrapedMenu);
     });
 
-    const prices: any = {
-        pizza: "$4.50",
-        soup: "$3.00",
-        main: "$5.00",
-    };
+    function reorder(menu: any): [string, any][] {
+        const entries: [string, any][] = []
+        for (const day of DAYS) {
+            if (menu[day]) {
+                entries.push([day, menu[day]])
+            }
+        }
+        return entries
+    }
 </script>
 
 <h1 class="justify-center text-center text-4xl font-bold text-white">JCS Insider</h1>
@@ -27,7 +39,7 @@
         <p>Loading...</p>
     {:then data}
         <div class="flex justify-evenly menu-table">
-            {#each Object.entries(data) as [weekday, dayData]}
+            {#each reorder(data) as [weekday, dayData]}
                 <div
                     class="w-1/4 text-center text-3xl font-bold flex flex-col flex-wrap days"
                 >
