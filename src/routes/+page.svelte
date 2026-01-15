@@ -1,71 +1,67 @@
 <script lang="ts">
-    import { onMount } from "svelte";
-    import type { ScrapedData } from "./api/scraper/+server";
+  import { onMount } from "svelte";
+  import type { ScrapedData } from "./api/scraper/+server";
 
-    const DAYS = [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-    ]
+  const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
-    let scrapedMenu: Promise<ScrapedData> | null = $state(null);
-    onMount(async () => {
-        let scraperData = await fetch("/api/scraper");
-        scrapedMenu = scraperData.json();
-        console.log(await scrapedMenu);
-    });
+  let scrapedMenu: Promise<ScrapedData> | null = $state(null);
+  onMount(async () => {
+    let scraperData = await fetch("/api/scraper");
+    scrapedMenu = scraperData.json();
+    console.log(await scrapedMenu);
+  });
 
-    function reorder(menu: any): [string, any][] {
-        const entries: [string, any][] = []
-        for (const day of DAYS) {
-            if (menu[day]) {
-                entries.push([day, menu[day]])
-            }
-        }
-        return entries
+  function reorder(menu: any): [string, any][] {
+    const entries: [string, any][] = [];
+    for (const day of DAYS) {
+      if (menu[day]) {
+        entries.push([day, menu[day]]);
+      }
     }
+    return entries;
+  }
 </script>
 
-<h1 class="justify-center text-center text-4xl font-bold text-white">JCS Insider</h1>
+<h1 class="justify-center text-center text-4xl font-bold text-white">
+  JCS Insider
+</h1>
 
 {#if !scrapedMenu}
-    <div class="flex justify-center items-center h-80 w-full">
-        <h1 class="w-full text-3xl text-center text-white">Loading Menu...</h1>
-    </div>
+  <div class="flex justify-center items-center h-80 w-full">
+    <h1 class="w-full text-3xl text-center text-white">Loading Menu...</h1>
+  </div>
 {:else}
-    {#await scrapedMenu}
-        <p>Loading...</p>
-    {:then data}
-        <div class="flex justify-evenly menu-table">
-            {#each reorder(data) as [weekday, dayData]}
-                <div
-                    class="w-1/4 text-center text-3xl font-bold flex flex-col flex-wrap days"
-                >
-                    <h1 class="weekday">{weekday}</h1>
-                    {#each dayData as categoryData}
-                        <h2 class="font-normal rows">
-                            {#if categoryData.split(": ")[0]}
-                                <span>
-                                        {categoryData.split(": ")[0]}
-                                </span>
-                            {/if}
-                        </h2>
-                        <p class="font-normal text-base items mb-4">
-                            {#if categoryData.split(": ")[1]}
-                                <span>
-                                        {categoryData.split(": ")[1]}
-                                </span>
-                            {/if}
-                        </p>
-                    {/each}
-                </div>
-            {/each}
+  {#await scrapedMenu}
+    <p>Loading...</p>
+  {:then data}
+    <div class="flex justify-evenly menu-table">
+      {#each reorder(data) as [weekday, dayData]}
+        <div
+          class="w-1/4 text-center text-3xl font-bold flex flex-col flex-wrap days"
+        >
+          <h1 class="weekday">{weekday}</h1>
+          {#each dayData as categoryData}
+            <h2 class="font-normal rows">
+              {#if categoryData.split(": ")[0]}
+                <span>
+                  {categoryData.split(": ")[0]}
+                </span>
+              {/if}
+            </h2>
+            <p class="font-normal text-base items mb-4">
+              {#if categoryData.split(": ")[1]}
+                <span>
+                  {categoryData.split(": ")[1]}
+                </span>
+              {/if}
+            </p>
+          {/each}
         </div>
-    {:catch error}
-        <p>{error.message}</p>
-    {/await}
+      {/each}
+    </div>
+  {:catch error}
+    <p>{error.message}</p>
+  {/await}
 {/if}
 
 <!-- <div
