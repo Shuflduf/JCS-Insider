@@ -1,5 +1,5 @@
 // import fs from "fs";
-import { MENU_ENDPOINT } from "$env/static/private"
+// import { MENU_ENDPOINT } from "$env/static/private"
 import type { RequestHandler } from "./$types";
 // //const puppeteer = require('puppeteer-extra');
 // //const StealthPlugin = require('puppeteer-extra-plugin-stealth');
@@ -19,23 +19,23 @@ const hardcoded = {"Wednesday":["Soup: Broccoli and Cheddar","Main: Nashville St
 
 export const GET: RequestHandler = async (event) => {
   return new Response(JSON.stringify(hardcoded))
-  const MAX_REQUESTS = 10;
-  for (let i = 0; i < MAX_REQUESTS; i++) {
+  // const MAX_REQUESTS = 10;
+  // for (let i = 0; i < MAX_REQUESTS; i++) {
 
-    try {
-      console.log(MENU_ENDPOINT)
-      console.log("FETCHING " + i);
-      let menu_req = await fetch(MENU_ENDPOINT, {
-        method: "GET",
-      });
-      if (menu_req.ok) {
-        return new Response(await menu_req.text());
-      }
-    } catch {
+  //   try {
+  //     console.log(MENU_ENDPOINT)
+  //     console.log("FETCHING " + i);
+  //     let menu_req = await fetch(MENU_ENDPOINT, {
+  //       method: "GET",
+  //     });
+  //     if (menu_req.ok) {
+  //       return new Response(await menu_req.text());
+  //     }
+  //   } catch {
 
-    } 
-  }
-  return new Response("An error occurred");
+  //   } 
+  // }
+  // return new Response("An error occurred");
 }
 
 //   // if (menu_req.ok) {
