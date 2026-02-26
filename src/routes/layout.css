@@ -1,1 +1,91 @@
-@import 'tailwindcss';
+@import "tailwindcss";
+
+/*bg ombre*/
+body {
+  background: linear-gradient(120deg, #a1722a, #740e0e, #000000, #33333b);
+  background-size: 300% 300%;
+  animation: ombreMove 12s ease infinite;
+}
+
+@keyframes ombreMove {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/*table wrraper*/
+.menu-table {
+  position: relative;
+  padding: 2rem;
+  gap: 2rem;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25),
+    inset 0 0 20px rgba(255, 255, 255, 0.05);
+}
+
+/* days column*/
+.days {
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: 250ms ease;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* hover glow */
+.days:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 0 20px rgba(255, 200, 80, 0.35),
+    0 0 35px rgba(255, 100, 80, 0.25);
+}
+
+/* WEEKDAY HEADER */
+.weekday {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 3px solid rgba(255, 255, 255, 0.35);
+  background: linear-gradient(to right,
+      transparent,
+      rgba(255, 200, 80, 0.15),
+      transparent);
+}
+
+/* CATEGORY TITLES */
+.rows {
+  margin-top: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: 1.3rem;
+  color: #ffe9b0;
+  text-shadow: 0 0 8px rgba(255, 200, 80, 0.4);
+}
+
+/* FOOD ITEMS */
+.items {
+  opacity: 0.95;
+  line-height: 1.4;
+  color: #fff;
+  font-size: 1rem;
+  padding: 0.25rem 0;
+}
+
+/* devider between categories */
+.items+.rows {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
